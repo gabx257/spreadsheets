@@ -3,10 +3,6 @@ import 'cell.dart';
 import 'column.dart';
 import 'row.dart';
 
-/// to-do:
-/// fazer testes para os novos metodos
-/// implementar o modulo nos projetos
-
 /// sempre deve ser inicializado com pelo menos 2 linhas, os headers e a com os valores
 class Sheet {
   int keyColumn;
