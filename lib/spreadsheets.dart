@@ -1,6 +1,6 @@
 /// Support for doing something awesome.
 ///
-/// More dartdocs go here.
+/// More dartdocs go here..
 library;
 
 export 'src/spreadsheet.dart' show Sheet;

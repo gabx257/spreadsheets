@@ -48,7 +48,7 @@ class Column with ListMixin<Cell> implements SheetSubElement<Column> {
       cells[index].value = value; // <<<=== !!!!!!!
 
   @override
-  bool contains(Object? element) => cells.contains(element);
+  bool contains(Object? element) => cells.map((e) => e.value).contains(element);
 
   @override
   void add(dynamic element) => cells

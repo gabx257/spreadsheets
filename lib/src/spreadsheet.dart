@@ -200,6 +200,17 @@ class Sheet {
     return this;
   }
 
+  /// default iterator é sobre as linhas da planilha
+  Iterable<T> iterator<T extends SheetSubElement<T>>() {
+    if (T == Column) {
+      return _cols.iterator as Iterable<T>;
+    } else if (T == Cell) {
+      return _rows.expand((row) => row.cells.values).iterator as Iterable<T>;
+    } else {
+      return _rows.iterator as Iterable<T>;
+    }
+  }
+
   void sortBy(String by) => _rows.sort((a, b) => a[by].value!.compareTo(b[by]));
 
   /// filtra a planilha, mantendo apenas as linhas que contem o valor passado na coluna especificada.
