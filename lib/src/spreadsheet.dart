@@ -323,7 +323,7 @@ class Sheet {
   /// caso [by] seja especificado, a funçao itera apenas sobre as celulas da coluna especificada.
   Row searchFor(Comparable value, [Comparable? by]) {
     if (by == null) {
-      return _rows.firstWhere((row) => row.values.contains(value));
+      return _rows.firstWhere((row) => row.contains(value));
     } else {
       return _rows.firstWhere((row) => row[by].value == value);
     }

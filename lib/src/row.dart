@@ -80,4 +80,7 @@ class Row with MapMixin<String, Cell> implements SheetSubElement<Row> {
 
   Cell firstWhere(bool Function(Cell element) test) =>
       cells.values.firstWhere(test);
+
+  bool contains(Comparable key) =>
+      cells.values.map((cell) => cell.value).contains(key);
 }
