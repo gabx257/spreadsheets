@@ -3,6 +3,7 @@
 /// More dartdocs go here.
 library;
 
-export 'src/spreadsheet.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/spreadsheet.dart' show Sheet;
+export 'src/row.dart' show Row;
+export 'src/cell.dart' show Cell;
+export 'src/column.dart' show Column;

@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'base_elements.dart';
 import 'cell.dart';
 
-class Col with ListMixin<Cell> implements SheetSubElement<Col> {
+class Column with ListMixin<Cell> implements SheetSubElement<Column> {
   String header;
   List<Cell> cells;
   int _colIndex;
@@ -14,7 +14,7 @@ class Col with ListMixin<Cell> implements SheetSubElement<Col> {
   @override
   set length(int newLength) {}
 
-  Col(this.header, this.cells, this._colIndex) {
+  Column(this.header, this.cells, this._colIndex) {
     length = cells.length;
   }
 
@@ -27,12 +27,12 @@ class Col with ListMixin<Cell> implements SheetSubElement<Col> {
     }
   }
 
-  Col.copy(Col col, [int? colIndex])
+  Column.copy(Column col, [int? colIndex])
       : header = col.header,
         cells = List<Cell>.from(col.cells),
         _colIndex = colIndex ?? col._colIndex;
 
-  Col.fromMap(Map<String, List<Comparable>> data, [int? colIndex])
+  Column.fromMap(Map<String, List<Comparable>> data, [int? colIndex])
       : header = data.keys.first,
         cells = data.values.first
             .map((e) => Cell(data.values.first.indexOf(e), colIndex ?? 0, e))

@@ -1,6 +1,6 @@
 import 'base_elements.dart';
 import 'cell.dart';
-import 'col.dart';
+import 'column.dart';
 import 'row.dart';
 
 /// to-do:
@@ -8,16 +8,16 @@ import 'row.dart';
 /// implementar o modulo nos projetos
 
 /// sempre deve ser inicializado com pelo menos 2 linhas, os headers e a com os valores
-class Sheet2 {
+class Sheet {
   int keyColumn;
   int headerPosition;
-  late List<Col> _cols;
+  late List<Column> _cols;
   late List<Row> _rows;
 
-  List<Col> get cols => _cols;
+  List<Column> get cols => _cols;
   List<Row> get rows => _rows;
 
-  set cols(List<Col> cols) {
+  set cols(List<Column> cols) {
     _cols = cols;
     _rows = _fromColsToRows(cols);
   }
@@ -28,7 +28,7 @@ class Sheet2 {
   }
 
   /// retorna a coluna com o colIndex correspondente
-  Col getCol(Comparable keyorIndex) => _cols.firstWhere((element) =>
+  Column getCol(Comparable keyorIndex) => _cols.firstWhere((element) =>
       element.header == keyorIndex || element.colIndex == keyorIndex);
 
   /// retorna a linha com o rowIndex correspondente
@@ -36,7 +36,7 @@ class Sheet2 {
 
   Cell getCell(int row, int col) => _rows[row][col];
 
-  Sheet2(
+  Sheet(
       {this.keyColumn = 0,
       required List<List<dynamic>> data,
       this.headerPosition = 0}) {
@@ -44,19 +44,19 @@ class Sheet2 {
     _cols = _fromRowsToCols(_rows);
   }
 
-  Sheet2._copy(this._cols, this._rows, this.headerPosition, this.keyColumn);
+  Sheet._copy(this._cols, this._rows, this.headerPosition, this.keyColumn);
 
-  Sheet2.fromMap(Map<String, List<Comparable>> data,
+  Sheet.fromMap(Map<String, List<Comparable>> data,
       {this.keyColumn = 0, this.headerPosition = 0}) {
-    _cols = data.entries.map((e) => Col.fromMap({e.key: e.value})).toList();
+    _cols = data.entries.map((e) => Column.fromMap({e.key: e.value})).toList();
     _rows = _fromColsToRows(_cols);
   }
 
-  List<Col> _fromRowsToCols(List<Row> rows) {
-    List<Col> cols = [];
+  List<Column> _fromRowsToCols(List<Row> rows) {
+    List<Column> cols = [];
     if (rows.isEmpty) return cols;
     for (var i = 0; i < rows[headerPosition].cells.length; i++) {
-      cols.add(Col(rows[headerPosition].keys.elementAt(i), [], i));
+      cols.add(Column(rows[headerPosition].keys.elementAt(i), [], i));
       for (var j = 0; j < rows.length; j++) {
         cols[i].add(_rows[j].values.elementAt(i));
       }
@@ -64,7 +64,7 @@ class Sheet2 {
     return cols;
   }
 
-  List<Row> _fromColsToRows(List<Col> cols) {
+  List<Row> _fromColsToRows(List<Column> cols) {
     List<Row> rows = [];
     List header = cols.removeAt(headerPosition).cells;
     for (var i = 0; i < cols.length; i++) {
@@ -76,10 +76,10 @@ class Sheet2 {
     return rows;
   }
 
-  List<Col> _toCols(List<List<dynamic>> data) {
-    List<Col> cols = [];
+  List<Column> _toCols(List<List<dynamic>> data) {
+    List<Column> cols = [];
     for (var i = 0; i < data[headerPosition].length; i++) {
-      cols.add(Col(data[headerPosition][i], [], i));
+      cols.add(Column(data[headerPosition][i], [], i));
       for (var j = 0; j < data.length; j++) {
         //
         if (j == headerPosition) continue;
@@ -101,6 +101,8 @@ class Sheet2 {
     }
     return rows;
   }
+
+  int get length => rows.length;
 
   /// adicional uma nova linha no final da planilha
   ///
@@ -125,7 +127,7 @@ class Sheet2 {
   /// adicional uma nova coluna no final da planilha
   void addCol(String header, {List<Comparable>? values}) {
     values ??= [];
-    cols.add(Col(header, [], cols.length));
+    cols.add(Column(header, [], cols.length));
     while (values.length > rows.length) {
       addRow();
     }
@@ -177,7 +179,7 @@ class Sheet2 {
       value.addAll(List.generate(rows.length - value.length, (index) => ''));
     }
 
-    Col col = cols.firstWhere(
+    Column col = cols.firstWhere(
         (col) => col.colIndex == keyorIndex || col.header == keyorIndex);
 
     for (var cell in col) {
@@ -194,7 +196,7 @@ class Sheet2 {
   }
 
   /// inverte a ordem das linhas,
-  Sheet2 get reversed {
+  Sheet get reversed {
     _rows = rows.reversed.toList();
     for (var col in _cols) {
       col.cells = col.cells.reversed.toList();
@@ -207,8 +209,8 @@ class Sheet2 {
   /// filtra a planilha, mantendo apenas as linhas que contem o valor passado na coluna especificada.
   ///
   /// [by] pode ser [int] ou [String].
-  Sheet2 filterFrom(Comparable by, Comparable value) {
-    Sheet2 newSheet = Sheet2(data: [], headerPosition: headerPosition);
+  Sheet filterFrom(Comparable by, Comparable value) {
+    Sheet newSheet = Sheet(data: [], headerPosition: headerPosition);
     int index = _rows.firstWhere((row) => row[by].value == value).rowIndex;
     newSheet.rows = _rows.sublist(index);
     return newSheet;
@@ -216,17 +218,17 @@ class Sheet2 {
 
   /// similar ao [filterFrom], mas ao invez de um valor recebe uma funcao bool para filtrar.
   ///
-  /// [T] pode ser [Row], [Col] ou [Cell] e é o tipo do elemento que será filtrado
+  /// [T] pode ser [Row], [Column] ou [Cell] e é o tipo do elemento que será filtrado
   ///
   /// se [T] não for especificado, a funcao assume que [T] é [Row]
   ///
   /// retorna uma nova planilha com as linhas filtradas
-  Sheet2 filterFromCondition<T extends SheetSubElement>(
+  Sheet filterFromCondition<T extends SheetSubElement>(
       bool Function(T e) condition,
       [Comparable? by]) {
-    Sheet2 newSheet = Sheet2(data: [], headerPosition: headerPosition);
-    if (T == Col) {
-      Col col = _cols.firstWhere(condition as bool Function(Col));
+    Sheet newSheet = Sheet(data: [], headerPosition: headerPosition);
+    if (T == Column) {
+      Column col = _cols.firstWhere(condition as bool Function(Column));
       int index = col.colIndex;
       newSheet.cols = _cols.sublist(index);
       newSheet._fromColsToRows(cols);
@@ -251,14 +253,14 @@ class Sheet2 {
   /// [by] pode ser [int] ou [String].
   ///
   /// retorna uma nova planilha com as linhas filtradas
-  Sheet2 filterOnly(Comparable by, Comparable value) {
-    Sheet2 newSheet = Sheet2(data: [], headerPosition: headerPosition);
+  Sheet filterOnly(Comparable by, Comparable value) {
+    Sheet newSheet = Sheet(data: [], headerPosition: headerPosition);
     newSheet.rows = _rows.where((row) => row[by].value == value).toList();
     return newSheet;
   }
 
   /// filtra a planilha de acordo com uma condição
-  /// [T] pode ser [Row], [Col] ou [Cell] e é o tipo do elemento que será removido
+  /// [T] pode ser [Row], [Column] ou [Cell] e é o tipo do elemento que será removido
   ///
   /// [condition] é uma função que recebe um [SheetSubElement] e retorna um [bool]
   ///
@@ -267,8 +269,8 @@ class Sheet2 {
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
   void removeFromCondition<T extends SheetSubElement<T>>(
       bool Function(T e) condition) {
-    if (T == Col) {
-      Col col = _cols.firstWhere(condition as bool Function(Col));
+    if (T == Column) {
+      Column col = _cols.firstWhere(condition as bool Function(Column));
       var i = _cols.indexOf(col);
 
       _cols.removeWhere((element) => element.colIndex == col.colIndex);
@@ -277,7 +279,7 @@ class Sheet2 {
         row.removeWhere((key, value) => value.colIndex == col.colIndex);
       }
 
-      for (Col element in _cols.skip(i)) {
+      for (Column element in _cols.skip(i)) {
         element.colIndex -= 1;
       }
 
@@ -321,8 +323,8 @@ class Sheet2 {
   }
 
   /// retorna uma copia da planilha
-  Sheet2 get copy => Sheet2._copy(
-      _cols.map((e) => Col(e.header, e.cells, e.colIndex)).toList(),
+  Sheet get copy => Sheet._copy(
+      _cols.map((e) => Column(e.header, e.cells, e.colIndex)).toList(),
       _rows.map((e) => Row(e.cells, e.rowIndex)).toList(),
       headerPosition,
       keyColumn);
