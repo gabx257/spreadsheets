@@ -3,7 +3,7 @@ import 'cell.dart';
 import 'column.dart';
 import 'row.dart';
 
-/// sempre deve ser inicializado com pelo menos 2 linhas, os headers e a com os valores
+/// sempre deve ser inicializado com pelo menos 2 linhas, uma de headers pelo menos uma de valores
 class Sheet {
   int keyColumn;
   int headerPosition;
@@ -39,6 +39,10 @@ class Sheet {
     _rows = _toRows(data);
     _cols = _fromRowsToCols(_rows);
   }
+
+  Sheet._empty(this.keyColumn, this.headerPosition)
+      : _cols = [],
+        _rows = [];
 
   Sheet._copy(this._cols, this._rows, this.headerPosition, this.keyColumn);
 
@@ -92,7 +96,11 @@ class Sheet {
     for (var i = 0; i < data.length; i++) {
       rows.add(Row({}, i));
       for (var j = 0; j < header.length; j++) {
-        rows[i].add(header[j], data[i][j]);
+        try {
+          rows[i].add(header[j], data[i][j]);
+        } on RangeError {
+          rows[i].add(header[j], '');
+        }
       }
     }
     return rows;
@@ -203,11 +211,11 @@ class Sheet {
   /// default iterator é sobre as linhas da planilha
   Iterable<T> iterator<T extends SheetSubElement<T>>() {
     if (T == Column) {
-      return _cols.iterator as Iterable<T>;
+      return _cols as Iterable<T>;
     } else if (T == Cell) {
-      return _rows.expand((row) => row.cells.values).iterator as Iterable<T>;
+      return _rows.expand((row) => row.cells.values) as Iterable<T>;
     } else {
-      return _rows.iterator as Iterable<T>;
+      return _rows as Iterable<T>;
     }
   }
 
@@ -233,7 +241,7 @@ class Sheet {
   Sheet filterFromCondition<T extends SheetSubElement>(
       bool Function(T e) condition,
       [Comparable? by]) {
-    Sheet newSheet = Sheet(data: [], headerPosition: headerPosition);
+    Sheet newSheet = Sheet._empty(keyColumn, headerPosition);
     if (T == Column) {
       Column col = _cols.firstWhere(condition as bool Function(Column));
       int index = col.colIndex;
@@ -245,12 +253,12 @@ class Sheet {
           .firstWhere(condition as bool Function(Cell));
       int index = cell.colIndex;
       newSheet.cols = _cols.sublist(index);
-      newSheet._fromColsToRows(cols);
+      newSheet._fromColsToRows(newSheet.cols);
     } else {
       Row row = _rows.firstWhere(condition as bool Function(Row));
       int index = row.rowIndex;
       newSheet.rows = _rows.sublist(index);
-      newSheet._fromRowsToCols(rows);
+      newSheet._fromRowsToCols(newSheet.rows);
     }
     return newSheet;
   }
