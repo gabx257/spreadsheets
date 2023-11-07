@@ -356,7 +356,7 @@ class Sheet {
       bool Function(T e) condition) {
     if (T == Column) {
       Iterable<Column> colsToRemove =
-          _cols.where(condition as bool Function(Column));
+          _cols.where(condition as bool Function(Column)).toList();
 
       for (var col in colsToRemove) {
         var i = _cols.indexOf(col);
@@ -373,13 +373,15 @@ class Sheet {
     } else if (T == Cell) {
       Iterable<Cell> cellsToRemove = _rows
           .expand((row) => row.cells.values)
-          .where(condition as bool Function(Cell));
+          .where(condition as bool Function(Cell))
+          .toList();
 
       for (var cell in cellsToRemove) {
         updateCell(cell.rowIndex, cell.colIndex, '');
       }
     } else {
-      Iterable<Row> rowsToRemove = _rows.where(condition as bool Function(Row));
+      Iterable<Row> rowsToRemove =
+          _rows.where(condition as bool Function(Row)).toList();
 
       for (var row in rowsToRemove) {
         var i = _rows.indexOf(row);
