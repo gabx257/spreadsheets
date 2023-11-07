@@ -286,8 +286,7 @@ class Sheet {
   ///
   /// retorna uma nova planilha com as linhas filtradas
   Sheet filterOnly(Comparable by, Comparable value) {
-    Sheet newSheet =
-        Sheet(data: [], headerPosition: headerPosition, keyColumn: keyColumn);
+    Sheet newSheet = Sheet._empty(keyColumn, headerPosition);
     newSheet.rows = _rows.where((row) => row[by].value == value).toList();
     return newSheet;
   }
