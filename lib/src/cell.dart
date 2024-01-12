@@ -13,5 +13,5 @@ class Cell implements SheetSubElement<Cell> {
   String toString() => value.toString();
 
   @override
-  int compareTo(Cell other) => value!.compareTo(other);
+  int compareTo(Cell other) => value!.compareTo(other.value);
 }

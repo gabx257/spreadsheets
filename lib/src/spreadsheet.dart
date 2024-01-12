@@ -236,7 +236,7 @@ class Sheet {
     }
   }
 
-  void sortBy(String by) => _rows.sort((a, b) => a[by].value!.compareTo(b[by]));
+  void sortBy(String by) => _rows.sort((a, b) => a[by].compareTo(b[by]));
 
   /// filtra a planilha, mantendo apenas as linhas que contem o valor passado na coluna especificada.
   ///
@@ -407,9 +407,11 @@ class Sheet {
   /// caso [by] seja especificado, a funçao itera apenas sobre as celulas da coluna especificada.
   Row searchFor(Comparable value, [Comparable? by]) {
     if (by == null) {
-      return _rows.firstWhere((row) => row.contains(value));
+      return _rows.firstWhere((row) => row.contains(value),
+          orElse: () => Row({}, -1));
     } else {
-      return _rows.firstWhere((row) => row[by].value == value);
+      return _rows.firstWhere((row) => row[by].value == value,
+          orElse: () => Row({}, -1));
     }
   }
 
