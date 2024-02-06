@@ -83,4 +83,7 @@ class Row with MapMixin<String, Cell> implements SheetSubElement<Row> {
 
   bool contains(Comparable key) =>
       cells.values.map((cell) => cell.value).contains(key);
+
+  @override
+  bool get isEmpty => cells.values.every((e) => e.isEmpty);
 }

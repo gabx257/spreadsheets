@@ -70,4 +70,7 @@ class Column with ListMixin<Cell> implements SheetSubElement<Column> {
 
   @override
   int compareTo(other) => _colIndex.compareTo(other._colIndex);
+
+  @override
+  bool get isEmpty => cells.every((e) => e.isEmpty);
 }
