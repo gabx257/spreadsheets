@@ -40,8 +40,8 @@ class Column with ListMixin<Cell> implements SheetSubElement<Column> {
         _colIndex = colIndex ?? 0;
 
   @override
-  Cell operator [](int index) =>
-      cells.firstWhere((cell) => cell.rowIndex == index);
+  Cell operator [](int index) => cells
+      .firstWhere((cell) => cell.rowIndex == index, orElse: () => Cell(0, 0));
 
   @override
   operator []=(int index, dynamic value) =>

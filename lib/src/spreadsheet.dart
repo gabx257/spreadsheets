@@ -12,6 +12,7 @@ class Sheet {
 
   List<Column> get cols => _cols;
   List<Row> get rows => _rows;
+  List<String> get header => _cols.map((e) => e.header).toList();
 
   set cols(List<Column> cols) {
     _cols = cols;
@@ -36,6 +37,12 @@ class Sheet {
       {this.keyColumn = 0,
       required List<List<dynamic>> data,
       this.headerPosition = 0}) {
+    if (data.isEmpty) {
+      _rows = [];
+      _cols = [];
+      return;
+    }
+
     _rows = _toRows(data);
     _cols = _fromRowsToCols(_rows);
   }
@@ -107,6 +114,22 @@ class Sheet {
   }
 
   int get length => rows.length;
+
+  /// pode usar esse metodo para fixar o tipo de valor das celulas
+  ///
+  /// só pode ser usado caso seja garantido que todas as celulas da planilha são do mesmo tipo
+  ///
+  /// retorna a planilha com o tipo de valor das celulas definido
+  ///
+  /// caso alguma celula não seja do tipo especificado, retorna um erro
+  Sheet implyType<T extends Comparable<T>>() {
+    for (var col in cols) {
+      for (var cell in col) {
+        cell.value = cell.value as T;
+      }
+    }
+    return this;
+  }
 
   /// adicional uma nova linha no final da planilha
   ///
@@ -180,7 +203,7 @@ class Sheet {
   /// atualiza a coluna selecionada, é uma forma de editar multiplas celulas de uma vez
   void updateCol(Comparable keyorIndex, List<Comparable> value) {
     if (value.length != rows.length) {
-      value.addAll(List.generate(rows.length - value.length, (index) => ''));
+      value.addAll(List<String>.filled(rows.length - value.length, ''));
     }
 
     Column col = cols.firstWhere(
@@ -219,7 +242,7 @@ class Sheet {
     }
   }
 
-  void sortBy(String by) => _rows.sort((a, b) => a[by].value!.compareTo(b[by]));
+  void sortBy(String by) => _rows.sort((a, b) => a[by].compareTo(b[by]));
 
   /// filtra a planilha, mantendo apenas as linhas que contem o valor passado na coluna especificada.
   ///
@@ -231,8 +254,8 @@ class Sheet {
     return newSheet;
   }
 
-  /// similar ao [filterFrom], mas ao invez de um valor recebe uma funcao bool para filtrar.
-  ///
+  /// similar ao [filterFrom], mas ao invez de um valor recebe uma funcao bool para filtrar
+  ///.
   /// [T] pode ser [Row], [Column] ou [Cell] e é o tipo do elemento que será filtrado
   ///
   /// se [T] não for especificado, a funcao assume que [T] é [Row]
@@ -269,12 +292,15 @@ class Sheet {
   ///
   /// retorna uma nova planilha com as linhas filtradas
   Sheet filterOnly(Comparable by, Comparable value) {
-    Sheet newSheet = Sheet(data: [], headerPosition: headerPosition);
+    Sheet newSheet = Sheet._empty(keyColumn, headerPosition);
     newSheet.rows = _rows.where((row) => row[by].value == value).toList();
     return newSheet;
   }
 
   /// filtra a planilha de acordo com uma condição
+  ///
+  /// remove a primeira linha que satisfaz a condição
+  ///
   /// [T] pode ser [Row], [Column] ou [Cell] e é o tipo do elemento que será removido
   ///
   /// [condition] é uma função que recebe um [SheetSubElement] e retorna um [bool]
@@ -282,7 +308,7 @@ class Sheet {
   /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
   ///
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
-  void removeFromCondition<T extends SheetSubElement<T>>(
+  void removeFromConditionSingle<T extends SheetSubElement<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
       Column col = _cols.firstWhere(condition as bool Function(Column));
@@ -309,7 +335,6 @@ class Sheet {
     } else {
       Row row = _rows.firstWhere(condition as bool Function(Row));
       var i = _rows.indexOf(row);
-
       _rows.removeWhere((element) => element.rowIndex == row.rowIndex);
 
       for (var col in _cols) {
@@ -318,6 +343,63 @@ class Sheet {
 
       for (var element in _rows.skip(i)) {
         element.rowIndex -= 1;
+      }
+    }
+  }
+
+  /// filtra a planilha de acordo com uma condição
+  ///
+  /// remove todas as linhas que atendem a condição
+  ///
+  /// [T] pode ser [Row], [Column] ou [Cell] e é o tipo do elemento que será removido
+  ///
+  /// [condition] é uma função que recebe um [SheetSubElement] e retorna um [bool]
+  ///
+  /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
+  ///
+  /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
+  void removeFromCondition<T extends SheetSubElement<T>>(
+      bool Function(T e) condition) {
+    if (T == Column) {
+      Iterable<Column> colsToRemove =
+          _cols.where(condition as bool Function(Column)).toList();
+
+      for (var col in colsToRemove) {
+        var i = _cols.indexOf(col);
+        _cols.removeWhere((element) => element.colIndex == col.colIndex);
+
+        for (var row in _rows) {
+          row.removeWhere((key, value) => value.colIndex == col.colIndex);
+        }
+
+        for (Column element in _cols.skip(i)) {
+          element.colIndex -= 1;
+        }
+      }
+    } else if (T == Cell) {
+      Iterable<Cell> cellsToRemove = _rows
+          .expand((row) => row.cells.values)
+          .where(condition as bool Function(Cell))
+          .toList();
+
+      for (var cell in cellsToRemove) {
+        updateCell(cell.rowIndex, cell.colIndex, '');
+      }
+    } else {
+      Iterable<Row> rowsToRemove =
+          _rows.where(condition as bool Function(Row)).toList();
+
+      for (var row in rowsToRemove) {
+        var i = _rows.indexOf(row);
+        _rows.removeWhere((element) => element.rowIndex == row.rowIndex);
+
+        for (var col in _cols) {
+          col.removeWhere((cell) => cell.rowIndex == row.rowIndex);
+        }
+
+        for (var element in _rows.skip(i)) {
+          element.rowIndex -= 1;
+        }
       }
     }
   }
@@ -331,9 +413,11 @@ class Sheet {
   /// caso [by] seja especificado, a funçao itera apenas sobre as celulas da coluna especificada.
   Row searchFor(Comparable value, [Comparable? by]) {
     if (by == null) {
-      return _rows.firstWhere((row) => row.contains(value));
+      return _rows.firstWhere((row) => row.contains(value),
+          orElse: () => Row({}, -1));
     } else {
-      return _rows.firstWhere((row) => row[by].value == value);
+      return _rows.firstWhere((row) => row[by].value == value,
+          orElse: () => Row({}, -1));
     }
   }
 
