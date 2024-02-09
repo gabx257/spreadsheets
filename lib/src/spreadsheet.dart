@@ -1,4 +1,5 @@
 //REFACTOR
+//bruhgit push -u origin
 import 'base_elements.dart';
 import 'cell.dart';
 import 'column.dart';
@@ -54,7 +55,7 @@ class Sheet {
     _rows = _fromColsToRows(_cols);
   }
 
-  List<Column> _fromRowsToCols(List<Row> rows) {
+  /*List<Column> _fromRowsToCols(List<Row> rows) {
     List<Column> cols = [];
     if (rows.isEmpty) return cols;
     for (var i = 0; i < rows[headerPosition].cells.length; i++) {
@@ -64,9 +65,24 @@ class Sheet {
       }
     }
     return cols;
-  }
+  }*/
 
-  List<Row> _fromColsToRows(List<Column> cols) {
+  
+  List<Column> _fromRowsToCols(List<Row> rows) {
+  if (rows.isEmpty) return [];
+
+  return List.generate(
+    rows[headerPosition].cells.length,
+    (i) => Column(
+      rows[headerPosition].keys.elementAt(i),
+      List.generate(rows.length, (j) => rows[j].values.elementAt(i)),
+      i,
+    ),
+  );
+}
+  
+
+  /*List<Row> _fromColsToRows(List<Column> cols) {
     List<Row> rows = [];
     List header = cols.removeAt(headerPosition).cells;
     for (var i = 0; i < cols.length; i++) {
@@ -76,9 +92,26 @@ class Sheet {
       }
     }
     return rows;
-  }
+  }*/
+  
+  List<Row> _fromColsToRows(List<Column> cols) {
+  if (cols.isEmpty) return [];
 
-  List<Column> _toCols(List<List<dynamic>> data) {
+  var header = cols.removeAt(headerPosition).cells;
+  return List.generate(
+    cols.length,
+    (i) => Row(
+      Map.fromIterables(
+        header.map((cell) => cell.value as String),
+        cols[i].cells,
+      ),
+      i,
+    ),
+  );
+}
+  
+
+  List<Column> _toCols(List<List<dynamic>> data) { //que
     List<Column> cols = [];
     for (var i = 0; i < data[headerPosition].length; i++) {
       cols.add(Column(data[headerPosition][i], [], i));
@@ -92,7 +125,7 @@ class Sheet {
     return cols;
   }
 
-  List<Row> _toRows(List<List<dynamic>> data) {
+  List<Row> _toRows(List<List<dynamic>> data) { 
     List<Row> rows = [];
     List header = data.removeAt(headerPosition);
     for (var i = 0; i < data.length; i++) {
@@ -126,6 +159,25 @@ class Sheet {
     return this;
   }
 
+  /*
+  Sheet implyType<T extends Comparable<T>>() {
+  try {
+    for (var col in cols) {
+      for (var cell in col) {
+        // Verifica se o valor da célula pode ser convertido para o tipo T.
+        // Se não puder, uma exceção será lançada.
+        cell.value = cell.value as T;
+      }
+    }
+  } on TypeError catch (e) {
+    // Tratamento de erro para quando a conversão falhar.
+    throw FormatException('Erro ao converter o valor da célula para o tipo $T: $e');
+  }
+
+  return this;
+}
+*/
+
   /// adicional uma nova linha no final da planilha
   ///
   /// [values.length] deve ser igual ou menor que o numero de colunas da planilha
@@ -144,7 +196,34 @@ class Sheet {
       cols[i].add(r[i]);
     }
     rows.add(r);
-  }
+    
+  } 
+
+  /// Adiciona uma nova linha no final da planilha.
+  ///
+  /// [values] é uma lista opcional de valores para a nova linha.
+  /// Se [values] for fornecido, seu comprimento deve ser igual ou menor que o número de colunas.
+  /// Se [values] for menor, as células restantes serão preenchidas com strings vazias.
+  /*void addRow({List<dynamic>? values}) {
+    // Se values for null, inicializa com uma lista vazia
+    values ??= [];
+
+    // Verifica se o número de valores fornecidos é apropriado
+    assert(values.length <= cols.length);
+    // Preenche o resto da linha com strings vazias, se necessário
+    //make list.filled iterable
+    values.addAll(List.filled(cols.length - values.length, ''));
+
+    // Cria uma nova linha com os valores fornecidos
+    Row newRow = Row({}, rows.length);
+    for (var i = 0; i < cols.length; i++) {
+      newRow[i] = values[i];
+      cols[i].add(newRow[i]);
+    }
+
+    // Adiciona a nova linha à lista de linhas
+    rows.add(newRow);
+  }*/
 
   /// adicional uma nova coluna no final da planilha
   void addCol(String header, {List<Comparable>? values}) {
