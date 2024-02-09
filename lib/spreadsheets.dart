@@ -7,3 +7,4 @@ export 'src/spreadsheet.dart' show Sheet;
 export 'src/row.dart' show Row;
 export 'src/cell.dart' show Cell;
 export 'src/column.dart' show Column;
+export 'src/googlesheet.dart' show GoogleSheet;

@@ -1,6 +1,10 @@
-import 'package:googleapis/drive/v2.dart';
+import 'package:googleapis/drive/v2.dart' show DriveApi;
 import 'package:googleapis/sheets/v4.dart' hide Sheet;
-import 'package:googleapis_auth/auth_io.dart';
+import 'package:googleapis_auth/auth_io.dart'
+    show
+        AutoRefreshingAuthClient,
+        ServiceAccountCredentials,
+        clientViaServiceAccount;
 import 'package:spreadsheets/spreadsheets.dart';
 
 class SheetsAPI {
