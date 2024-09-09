@@ -1,4 +1,3 @@
-import 'base_elements.dart';
 import 'cell.dart';
 import 'column.dart';
 import 'row.dart';
@@ -83,6 +82,7 @@ class Sheet {
     return rows;
   }
 
+  // ignore: unused_element
   List<Column> _toCols(List<List<dynamic>> data) {
     List<Column> cols = [];
     for (var i = 0; i < data[headerPosition].length; i++) {
@@ -223,23 +223,12 @@ class Sheet {
   }
 
   /// inverte a ordem das linhas,
-  Sheet get reversed {
-    _rows = rows.reversed.toList();
-    for (var col in _cols) {
-      col.cells = col.cells.reversed.toList();
-    }
-    return this;
-  }
+  Iterable<Row> get reversed => _rows.reversed;
 
-  /// default iterator é sobre as linhas da planilha
-  Iterable<T> iterator<T extends SheetSubElement<T>>() {
-    if (T == Column) {
-      return _cols as Iterable<T>;
-    } else if (T == Cell) {
-      return _rows.expand((row) => row.cells.values) as Iterable<T>;
-    } else {
-      return _rows as Iterable<T>;
-    }
+  Sheet inverse() {
+    _rows = _rows.reversed.toList();
+    _cols = _fromRowsToCols(_rows);
+    return this;
   }
 
   void sortBy(String by) => _rows.sort((a, b) => a[by].compareTo(b[by]));
@@ -261,19 +250,31 @@ class Sheet {
   /// se [T] não for especificado, a funcao assume que [T] é [Row]
   ///
   /// retorna uma nova planilha com as linhas filtradas
-  Sheet filterFromCondition<T extends SheetSubElement>(
+  ///
+  /// returns this if no element is found
+  Sheet filterFromCondition<T extends Comparable<T>>(
       bool Function(T e) condition,
       [Comparable? by]) {
     Sheet newSheet = Sheet._empty(keyColumn, headerPosition);
     if (T == Column) {
-      Column col = _cols.firstWhere(condition as bool Function(Column));
+      Column col;
+      try {
+        col = _cols.firstWhere(condition as bool Function(Column));
+      } catch (e) {
+        return this;
+      }
       int index = col.colIndex;
       newSheet.cols = _cols.sublist(index);
       newSheet._fromColsToRows(cols);
     } else if (T == Cell) {
-      Cell cell = _rows
-          .expand((row) => row.cells.values)
-          .firstWhere(condition as bool Function(Cell));
+      Cell cell;
+      try {
+        cell = _rows
+            .expand((row) => row.cells.values)
+            .firstWhere(condition as bool Function(Cell));
+      } catch (_) {
+        return this;
+      }
       int index = cell.colIndex;
       newSheet.cols = _cols.sublist(index);
       newSheet._fromColsToRows(newSheet.cols);
@@ -308,7 +309,7 @@ class Sheet {
   /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
   ///
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
-  void removeFromConditionSingle<T extends SheetSubElement<T>>(
+  void removeFromConditionSingle<T extends Comparable<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
       Column col = _cols.firstWhere(condition as bool Function(Column));
@@ -358,7 +359,7 @@ class Sheet {
   /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
   ///
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
-  void removeFromCondition<T extends SheetSubElement<T>>(
+  void removeFromCondition<T extends Comparable<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
       Iterable<Column> colsToRemove =

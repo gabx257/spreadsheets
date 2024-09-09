@@ -1,9 +1,8 @@
 import 'dart:collection';
 
-import 'base_elements.dart';
 import 'cell.dart';
 
-class Column with ListMixin<Cell> implements SheetSubElement<Column> {
+class Column with ListMixin<Cell> implements Comparable<Column> {
   String header;
   List<Cell> cells;
   int _colIndex;

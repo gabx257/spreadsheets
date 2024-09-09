@@ -1,9 +1,8 @@
 import 'dart:collection';
 
-import 'base_elements.dart';
 import 'cell.dart';
 
-class Row with MapMixin<String, Cell> implements SheetSubElement<Row> {
+class Row with MapMixin<String, Cell> implements Comparable<Row> {
   Map<String, Cell> cells;
   int _rowIndex;
 
@@ -32,7 +31,7 @@ class Row with MapMixin<String, Cell> implements SheetSubElement<Row> {
     if (key is int) {
       return cells.entries.elementAt(key).value;
     } else {
-      throw Exception('Key not found');
+      throw FormatException('Key not found');
     }
   }
 
@@ -49,7 +48,7 @@ class Row with MapMixin<String, Cell> implements SheetSubElement<Row> {
   Cell get last => this[cells.length - 1];
 
   void add(String key, dynamic value) {
-    if (cells.containsKey(key)) throw Exception('Key already exists');
+    if (cells.containsKey(key)) throw FormatException('Key already exists');
     cells[key] = value is Cell ? value : Cell(rowIndex, cells.length, value);
   }
 
