@@ -279,9 +279,10 @@ class Sheet {
       newSheet.cols = _cols.sublist(index);
       newSheet._fromColsToRows(newSheet.cols);
     } else {
-      Row row = _rows.firstWhere(condition as bool Function(Row));
-      int index = row.rowIndex;
-      newSheet.rows = _rows.sublist(index);
+      Row row = _rows.firstWhere(condition as bool Function(Row),
+          orElse: () => Row({}, -1));
+      if (row.rowIndex == -1) return newSheet;
+      newSheet.rows = _rows.sublist(row.rowIndex);
       newSheet._fromRowsToCols(newSheet.rows);
     }
     return newSheet;
