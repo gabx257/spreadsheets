@@ -23,6 +23,10 @@ class Sheet {
     _cols = _fromRowsToCols(rows);
   }
 
+  int get length => rows.length;
+
+  int get lastRow => length + 2;
+
   /// retorna a coluna com o colIndex correspondente
   Column getCol(Comparable keyorIndex) => _cols.firstWhere((element) =>
       element.header == keyorIndex || element.colIndex == keyorIndex);
@@ -112,8 +116,6 @@ class Sheet {
     }
     return rows;
   }
-
-  int get length => rows.length;
 
   /// pode usar esse metodo para fixar o tipo de valor das celulas
   ///
@@ -265,7 +267,6 @@ class Sheet {
       }
       int index = col.colIndex;
       newSheet.cols = _cols.sublist(index);
-      newSheet._fromColsToRows(cols);
     } else if (T == Cell) {
       Cell cell;
       try {
@@ -277,13 +278,11 @@ class Sheet {
       }
       int index = cell.colIndex;
       newSheet.cols = _cols.sublist(index);
-      newSheet._fromColsToRows(newSheet.cols);
     } else {
       Row row = _rows.firstWhere(condition as bool Function(Row),
           orElse: () => Row({}, -1));
       if (row.rowIndex == -1) return newSheet;
       newSheet.rows = _rows.sublist(row.rowIndex);
-      newSheet._fromRowsToCols(newSheet.rows);
     }
     return newSheet;
   }
@@ -413,14 +412,14 @@ class Sheet {
   /// caso [by] não seja especificado, a funçao itera sobre todas as celulas da planilha.
   ///
   /// caso [by] seja especificado, a funçao itera apenas sobre as celulas da coluna especificada.
-  Row searchFor(Comparable value, [Comparable? by]) {
-    if (by == null) {
-      return _rows.firstWhere((row) => row.contains(value),
-          orElse: () => Row({}, -1));
-    } else {
-      return _rows.firstWhere((row) => row[by].value == value,
-          orElse: () => Row({}, -1));
+  Row? searchFor(Comparable value, [Comparable? by]) {
+    for (var row in _rows) {
+      if (by == null) {
+        if (row.contains(value)) return row;
+      }
+      if (row[by].value == value) return row;
     }
+    return null;
   }
 
   /// retorna uma copia da planilha

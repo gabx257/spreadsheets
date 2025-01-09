@@ -81,10 +81,11 @@ void main() {
     });
 
     test('Reverse Sheet', () {
-      print(sheet);
-      Sheet reversedSheet = sheet.reversed;
-      expect(reversedSheet.getCell(0, 0).value, 'Value3');
-      print(reversedSheet);
+      print(sheet.rows);
+      final reversed = sheet.reversed.toList();
+      print(reversed);
+      expect(reversed.length, 2);
+      expect(reversed.first.first.value, 'Value3');
     });
 
     test('Filter From', () {
@@ -100,8 +101,8 @@ void main() {
     });
 
     test('Search For', () {
-      Row row = sheet.searchFor('Value1');
-      expect(row.rowIndex, 0);
+      Row? row = sheet.searchFor('Value1');
+      expect(row!.rowIndex, 0);
     });
 
     test('Copy Sheet', () {
