@@ -391,9 +391,6 @@ class Sheet {
         }
         return false;
       }));
-      for (var element in _rows) {
-        element.rowIndex -= count;
-      }
     }
   }
 
