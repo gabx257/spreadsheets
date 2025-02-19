@@ -362,10 +362,7 @@ class Sheet {
   void removeFromCondition<T extends Comparable<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
-      Iterable<Column> colsToRemove =
-          _cols.where(condition as bool Function(Column)).toList();
-
-      for (var col in colsToRemove) {
+      for (var col in _cols.where(condition as bool Function(Column))) {
         var i = _cols.indexOf(col);
         _cols.removeWhere((element) => element.colIndex == col.colIndex);
 
@@ -380,27 +377,22 @@ class Sheet {
     } else if (T == Cell) {
       Iterable<Cell> cellsToRemove = _rows
           .expand((row) => row.cells.values)
-          .where(condition as bool Function(Cell))
-          .toList();
+          .where(condition as bool Function(Cell));
 
       for (var cell in cellsToRemove) {
         updateCell(cell.rowIndex, cell.colIndex, '');
       }
     } else {
-      Iterable<Row> rowsToRemove =
-          _rows.where(condition as bool Function(Row)).toList();
-
-      for (var row in rowsToRemove) {
-        var i = _rows.indexOf(row);
-        _rows.removeWhere((element) => element.rowIndex == row.rowIndex);
-
-        for (var col in _cols) {
-          col.removeWhere((cell) => cell.rowIndex == row.rowIndex);
+      var count = 0;
+      _rows.removeWhere(((e) {
+        if (condition(e as T)) {
+          count++;
+          return true;
         }
-
-        for (var element in _rows.skip(i)) {
-          element.rowIndex -= 1;
-        }
+        return false;
+      }));
+      for (var element in _rows) {
+        element.rowIndex -= count;
       }
     }
   }
