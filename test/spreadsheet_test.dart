@@ -13,7 +13,7 @@ void main() {
         data: [
           ['Header1', 'Header2'],
           ['Value1', 'Value2'],
-          ['Value3', 'Value4']
+          ['Value3', 'Value4'],
         ],
       );
     });
@@ -22,6 +22,8 @@ void main() {
       expect(sheet.cols.length, 2);
       expect(sheet.rows.length, 2);
       expect(sheet.header, ['Header1', 'Header2']);
+      print(sheet);
+      print(sheet.header);
     });
 
     test('Get Column', () {

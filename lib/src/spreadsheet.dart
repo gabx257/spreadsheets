@@ -2,16 +2,17 @@ import 'cell.dart';
 import 'column.dart';
 import 'row.dart';
 
-/// sempre deve ser inicializado com pelo menos 2 linhas, uma de headers pelo menos uma de valores
+/// sempre deve ser inicializado com pelo menos 1 linha, o header
 class Sheet {
   int keyColumn;
   int headerPosition;
+  late List<String> _header;
   late List<Column> _cols;
   late List<Row> _rows;
 
   List<Column> get cols => _cols;
   List<Row> get rows => _rows;
-  List<String> get header => _cols.map((e) => e.header).toList();
+  List<String> get header => _header;
 
   set cols(List<Column> cols) {
     _cols = cols;
@@ -45,7 +46,7 @@ class Sheet {
       _cols = [];
       return;
     }
-
+    _header = _getHeader(data);
     _rows = _toRows(data);
     _cols = _fromRowsToCols(_rows);
   }
@@ -64,7 +65,12 @@ class Sheet {
 
   List<Column> _fromRowsToCols(List<Row> rows) {
     List<Column> cols = [];
-    if (rows.isEmpty) return cols;
+    if (rows.isEmpty) {
+      for (var header in _header) {
+        cols.add(Column(header, [], cols.length));
+      }
+      return cols;
+    }
     for (var i = 0; i < rows[headerPosition].cells.length; i++) {
       cols.add(Column(rows[headerPosition].keys.elementAt(i), [], i));
       for (var j = 0; j < rows.length; j++) {
@@ -76,14 +82,22 @@ class Sheet {
 
   List<Row> _fromColsToRows(List<Column> cols) {
     List<Row> rows = [];
-    List header = cols.removeAt(headerPosition).cells;
     for (var i = 0; i < cols.length; i++) {
       rows.add(Row({}, i));
-      for (var j = 0; j < header.length; j++) {
-        rows[i].add(header[j].value as String, cols[i].cells[j]);
+      for (var j = 0; j < _header.length; j++) {
+        rows[i].add(_header[j], cols[i].cells[j]);
       }
     }
     return rows;
+  }
+
+  List<String> _getHeader(List<List<dynamic>> data) {
+    if (data.isEmpty) return [];
+    if (headerPosition >= data.length) {
+      throw RangeError('Header position is out of range');
+    }
+    var d = data.removeAt(headerPosition);
+    return d.map((e) => e.toString()).toList();
   }
 
   // ignore: unused_element
@@ -103,14 +117,13 @@ class Sheet {
 
   List<Row> _toRows(List<List<dynamic>> data) {
     List<Row> rows = [];
-    List header = data.removeAt(headerPosition);
     for (var i = 0; i < data.length; i++) {
       rows.add(Row({}, i));
-      for (var j = 0; j < header.length; j++) {
+      for (var j = 0; j < _header.length; j++) {
         try {
-          rows[i].add(header[j], data[i][j]);
+          rows[i].add(_header[j], data[i][j]);
         } on RangeError {
-          rows[i].add(header[j], '');
+          rows[i].add(_header[j], '');
         }
       }
     }
