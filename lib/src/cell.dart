@@ -1,6 +1,4 @@
-import 'base_elements.dart';
-
-class Cell implements SheetSubElement<Cell> {
+class Cell implements Comparable<Cell> {
   Comparable? value;
   int rowIndex;
   int colIndex;
@@ -15,17 +13,20 @@ class Cell implements SheetSubElement<Cell> {
   @override
   int compareTo(Cell other) => value!.compareTo(other.value);
 
-  bool isValue(Comparable compare) => value == compare;
-
-  bool isRow(int row) => rowIndex == row;
-
-  bool isColumn(int col) => colIndex == col;
-
   @override
   bool operator ==(Object other) => other is Cell && value == other.value;
 
   @override
   int get hashCode => value.hashCode;
+
+  bool isValueFromCondition(bool Function(Comparable?) condition) =>
+      condition(value);
+
+  bool isValue(Comparable compare) => value == compare;
+
+  bool isRow(int row) => rowIndex == row;
+
+  bool isColumn(int col) => colIndex == col;
 
   bool get isEmpty => value == null || value == '';
 

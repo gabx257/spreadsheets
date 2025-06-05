@@ -1,18 +1,18 @@
-import 'base_elements.dart';
 import 'cell.dart';
 import 'column.dart';
 import 'row.dart';
 
-/// sempre deve ser inicializado com pelo menos 2 linhas, uma de headers pelo menos uma de valores
+/// sempre deve ser inicializado com pelo menos 1 linha, o header
 class Sheet {
   int keyColumn;
   int headerPosition;
+  late List<String> _header;
   late List<Column> _cols;
   late List<Row> _rows;
 
   List<Column> get cols => _cols;
   List<Row> get rows => _rows;
-  List<String> get header => _cols.map((e) => e.header).toList();
+  List<String> get header => _header;
 
   set cols(List<Column> cols) {
     _cols = cols;
@@ -23,6 +23,10 @@ class Sheet {
     _rows = rows;
     _cols = _fromRowsToCols(rows);
   }
+
+  int get length => rows.length;
+
+  int get lastRow => length + 2;
 
   /// retorna a coluna com o colIndex correspondente
   Column getCol(Comparable keyorIndex) => _cols.firstWhere((element) =>
@@ -42,7 +46,7 @@ class Sheet {
       _cols = [];
       return;
     }
-
+    _header = _getHeader(data);
     _rows = _toRows(data);
     _cols = _fromRowsToCols(_rows);
   }
@@ -61,7 +65,12 @@ class Sheet {
 
   List<Column> _fromRowsToCols(List<Row> rows) {
     List<Column> cols = [];
-    if (rows.isEmpty) return cols;
+    if (rows.isEmpty) {
+      for (var header in _header) {
+        cols.add(Column(header, [], cols.length));
+      }
+      return cols;
+    }
     for (var i = 0; i < rows[headerPosition].cells.length; i++) {
       cols.add(Column(rows[headerPosition].keys.elementAt(i), [], i));
       for (var j = 0; j < rows.length; j++) {
@@ -73,16 +82,25 @@ class Sheet {
 
   List<Row> _fromColsToRows(List<Column> cols) {
     List<Row> rows = [];
-    List header = cols.removeAt(headerPosition).cells;
     for (var i = 0; i < cols.length; i++) {
       rows.add(Row({}, i));
-      for (var j = 0; j < header.length; j++) {
-        rows[i].add(header[j].value as String, cols[i].cells[j]);
+      for (var j = 0; j < _header.length; j++) {
+        rows[i].add(_header[j], cols[i].cells[j]);
       }
     }
     return rows;
   }
 
+  List<String> _getHeader(List<List<dynamic>> data) {
+    if (data.isEmpty) return [];
+    if (headerPosition >= data.length) {
+      throw RangeError('Header position is out of range');
+    }
+    var d = data.removeAt(headerPosition);
+    return d.map((e) => e.toString()).toList();
+  }
+
+  // ignore: unused_element
   List<Column> _toCols(List<List<dynamic>> data) {
     List<Column> cols = [];
     for (var i = 0; i < data[headerPosition].length; i++) {
@@ -99,21 +117,18 @@ class Sheet {
 
   List<Row> _toRows(List<List<dynamic>> data) {
     List<Row> rows = [];
-    List header = data.removeAt(headerPosition);
     for (var i = 0; i < data.length; i++) {
       rows.add(Row({}, i));
-      for (var j = 0; j < header.length; j++) {
+      for (var j = 0; j < _header.length; j++) {
         try {
-          rows[i].add(header[j], data[i][j]);
+          rows[i].add(_header[j], data[i][j]);
         } on RangeError {
-          rows[i].add(header[j], '');
+          rows[i].add(_header[j], '');
         }
       }
     }
     return rows;
   }
-
-  int get length => rows.length;
 
   /// pode usar esse metodo para fixar o tipo de valor das celulas
   ///
@@ -223,23 +238,12 @@ class Sheet {
   }
 
   /// inverte a ordem das linhas,
-  Sheet get reversed {
-    _rows = rows.reversed.toList();
-    for (var col in _cols) {
-      col.cells = col.cells.reversed.toList();
-    }
-    return this;
-  }
+  Iterable<Row> get reversed => _rows.reversed;
 
-  /// default iterator é sobre as linhas da planilha
-  Iterable<T> iterator<T extends SheetSubElement<T>>() {
-    if (T == Column) {
-      return _cols as Iterable<T>;
-    } else if (T == Cell) {
-      return _rows.expand((row) => row.cells.values) as Iterable<T>;
-    } else {
-      return _rows as Iterable<T>;
-    }
+  Sheet inverse() {
+    _rows = _rows.reversed.toList();
+    _cols = _fromRowsToCols(_rows);
+    return this;
   }
 
   void sortBy(String by) => _rows.sort((a, b) => a[by].compareTo(b[by]));
@@ -261,27 +265,37 @@ class Sheet {
   /// se [T] não for especificado, a funcao assume que [T] é [Row]
   ///
   /// retorna uma nova planilha com as linhas filtradas
-  Sheet filterFromCondition<T extends SheetSubElement>(
+  ///
+  /// returns this if no element is found
+  Sheet filterFromCondition<T extends Comparable<T>>(
       bool Function(T e) condition,
       [Comparable? by]) {
     Sheet newSheet = Sheet._empty(keyColumn, headerPosition);
     if (T == Column) {
-      Column col = _cols.firstWhere(condition as bool Function(Column));
+      Column col;
+      try {
+        col = _cols.firstWhere(condition as bool Function(Column));
+      } catch (e) {
+        return this;
+      }
       int index = col.colIndex;
       newSheet.cols = _cols.sublist(index);
-      newSheet._fromColsToRows(cols);
     } else if (T == Cell) {
-      Cell cell = _rows
-          .expand((row) => row.cells.values)
-          .firstWhere(condition as bool Function(Cell));
+      Cell cell;
+      try {
+        cell = _rows
+            .expand((row) => row.cells.values)
+            .firstWhere(condition as bool Function(Cell));
+      } catch (_) {
+        return this;
+      }
       int index = cell.colIndex;
       newSheet.cols = _cols.sublist(index);
-      newSheet._fromColsToRows(newSheet.cols);
     } else {
-      Row row = _rows.firstWhere(condition as bool Function(Row));
-      int index = row.rowIndex;
-      newSheet.rows = _rows.sublist(index);
-      newSheet._fromRowsToCols(newSheet.rows);
+      Row row = _rows.firstWhere(condition as bool Function(Row),
+          orElse: () => Row({}, -1));
+      if (row.rowIndex == -1) return newSheet;
+      newSheet.rows = _rows.sublist(row.rowIndex);
     }
     return newSheet;
   }
@@ -308,7 +322,7 @@ class Sheet {
   /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
   ///
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
-  void removeFromConditionSingle<T extends SheetSubElement<T>>(
+  void removeFromConditionSingle<T extends Comparable<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
       Column col = _cols.firstWhere(condition as bool Function(Column));
@@ -358,13 +372,10 @@ class Sheet {
   /// caso o tipo [T] não seja especificado, a função assume que [T] é [Row]
   ///
   /// remover uma celula passa o valor da celula para uma [String] vazia, para manter as dimensões da planilha
-  void removeFromCondition<T extends SheetSubElement<T>>(
+  void removeFromCondition<T extends Comparable<T>>(
       bool Function(T e) condition) {
     if (T == Column) {
-      Iterable<Column> colsToRemove =
-          _cols.where(condition as bool Function(Column)).toList();
-
-      for (var col in colsToRemove) {
+      for (var col in _cols.where(condition as bool Function(Column))) {
         var i = _cols.indexOf(col);
         _cols.removeWhere((element) => element.colIndex == col.colIndex);
 
@@ -379,28 +390,20 @@ class Sheet {
     } else if (T == Cell) {
       Iterable<Cell> cellsToRemove = _rows
           .expand((row) => row.cells.values)
-          .where(condition as bool Function(Cell))
-          .toList();
+          .where(condition as bool Function(Cell));
 
       for (var cell in cellsToRemove) {
         updateCell(cell.rowIndex, cell.colIndex, '');
       }
     } else {
-      Iterable<Row> rowsToRemove =
-          _rows.where(condition as bool Function(Row)).toList();
-
-      for (var row in rowsToRemove) {
-        var i = _rows.indexOf(row);
-        _rows.removeWhere((element) => element.rowIndex == row.rowIndex);
-
-        for (var col in _cols) {
-          col.removeWhere((cell) => cell.rowIndex == row.rowIndex);
+      var count = 0;
+      _rows.removeWhere(((e) {
+        if (condition(e as T)) {
+          count++;
+          return true;
         }
-
-        for (var element in _rows.skip(i)) {
-          element.rowIndex -= 1;
-        }
-      }
+        return false;
+      }));
     }
   }
 
@@ -411,14 +414,14 @@ class Sheet {
   /// caso [by] não seja especificado, a funçao itera sobre todas as celulas da planilha.
   ///
   /// caso [by] seja especificado, a funçao itera apenas sobre as celulas da coluna especificada.
-  Row searchFor(Comparable value, [Comparable? by]) {
-    if (by == null) {
-      return _rows.firstWhere((row) => row.contains(value),
-          orElse: () => Row({}, -1));
-    } else {
-      return _rows.firstWhere((row) => row[by].value == value,
-          orElse: () => Row({}, -1));
+  Row? searchFor(Comparable value, [Comparable? by]) {
+    for (var row in _rows) {
+      if (by == null) {
+        if (row.contains(value)) return row;
+      }
+      if (row[by].value == value) return row;
     }
+    return null;
   }
 
   /// retorna uma copia da planilha
